@@ -52,7 +52,7 @@ Namespace-local UID `0` → host UID `1000`. Root inside, unprivileged outside.
 ## Roadmap
 
 - [x] User namespace + UID/GID mapping
-- [ ] Switch to namespace-local root via `setuid(0)` / `setgid(0)`
+- [x] Switch to namespace-local root via `setuid(0)` / `setgid(0)`
 - [ ] PID namespace isolation
 - [ ] Mount namespace + filesystem view control
 - [ ] Seccomp BPF syscall filter profile
