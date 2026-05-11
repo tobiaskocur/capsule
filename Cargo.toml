@@ -1,0 +1,8 @@
+[package]
+name = "capsule"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+thiserror = "2.0.18"
+nix = { version = "0.31.3", features = ["sched", "user"] }
