@@ -3,7 +3,14 @@ mod namespaces;
 mod errors;
 mod utils;
 
-use namespaces::{current_user_namespace, enter_user_namespace, setup_user_mapping};
+use namespaces::{
+    current_user_namespace,
+    enter_user_namespace,
+    setup_user_mapping,
+    read_uid_map,
+    read_gid_map,
+    become_root_in_namespace
+};
 
 fn main() {
     let host_uid = nix::unistd::getuid().as_raw();
@@ -45,6 +52,37 @@ fn main() {
     }
 
     println!("setup user mapping");
-    println!("user uid: {:?}", utils::read_uid_map());
+
+    match read_uid_map() {
+        Ok(uid_map) => {
+            println!("uid map: {:?}", uid_map);
+        },
+        Err(e) => {
+            eprintln!("failed to read uid map: {}", e);
+        }
+    }
+
+    match read_gid_map() {
+        Ok(gid_map) => {
+            println!("gid map: {:?}", gid_map);
+        }
+        Err(e) => {
+            eprintln!("failed to read gid map: {}", e);
+        }
+    }
+
+    println!("before setuid/gid:");
+    println!("uid: {}", nix::unistd::getuid().as_raw());
+    println!("gid: {}", nix::unistd::getgid().as_raw());
+
+    if let Err(e) = become_root_in_namespace() {
+        eprintln!("failed to become root in namespace: {}", e);
+        return;
+    }
+
+    println!("become root in namespace");
+    println!("after setuid/gid:");
+    println!("uid: {}", nix::unistd::getuid().as_raw());
+    println!("gid: {}", nix::unistd::getgid().as_raw());
 }
 

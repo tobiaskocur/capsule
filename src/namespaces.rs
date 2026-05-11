@@ -27,3 +27,20 @@ pub fn setup_user_mapping(host_uid: u32, host_gid: u32) -> Result<()> {
 
     Ok(())
 }
+
+pub fn read_uid_map() -> Result<String> {
+    Ok(std::fs::read_to_string("/proc/self/uid_map")?)
+}
+
+pub fn read_gid_map() -> Result<String> {
+    Ok(std::fs::read_to_string("/proc/self/gid_map")?)
+}
+pub fn become_root_in_namespace() -> Result<()> {
+    nix::unistd::setgid(nix::unistd::Gid::from_raw(0))
+        .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+
+    nix::unistd::setuid(nix::unistd::Uid::from_raw(0))
+        .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+
+    Ok(())
+}
