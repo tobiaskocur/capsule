@@ -29,7 +29,7 @@ src/
 ├── main.rs        — entry point and execution flow
 ├── errors.rs      — shared error types
 ├── namespaces.rs  — namespace isolation logic
-├── sandbox.rs     — high-level sandbox API (in progress)
+├── capsule.rs     — high-level sandbox API (in progress)
 └── utils.rs       — utility functions
 ```
 
