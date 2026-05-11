@@ -3,10 +3,14 @@ use nix::sched::{unshare, CloneFlags};
 
 use crate::errors::{CapsuleError, Result};
 
+// we retrieve the namespace id of the current user namespace through symlink to check if we are actually changing after entering a new one
 pub fn current_user_namespace() -> Result<String> {
     let path = fs::read_link("/proc/self/ns/user")?;
     Ok(path.display().to_string())
 }
+
+// create a new user namespace for the current process, CLONE_NEWUSER allows us to later have
+// root in our namespace, without launching the app with root privileges
 pub fn enter_user_namespace() -> Result<()> {
     unshare(CloneFlags::CLONE_NEWUSER)
         .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
@@ -28,6 +32,7 @@ pub fn setup_user_mapping(host_uid: u32, host_gid: u32) -> Result<()> {
     Ok(())
 }
 
+// read the uid/gid map from procfs
 pub fn read_uid_map() -> Result<String> {
     Ok(std::fs::read_to_string("/proc/self/uid_map")?)
 }
@@ -35,6 +40,9 @@ pub fn read_uid_map() -> Result<String> {
 pub fn read_gid_map() -> Result<String> {
     Ok(std::fs::read_to_string("/proc/self/gid_map")?)
 }
+
+// as we set gid and uid to 0 in this namespace we become root
+// this works because we already mapped them to the procfs before
 pub fn become_root_in_namespace() -> Result<()> {
     nix::unistd::setgid(nix::unistd::Gid::from_raw(0))
         .map_err(|e| CapsuleError::Namespace(e.to_string()))?;

@@ -57,7 +57,7 @@ Namespace-local UID `0` → host UID `1000`. Root inside, unprivileged outside.
 - [ ] Mount namespace + filesystem view control
 - [ ] Seccomp BPF syscall filter profile
 - [ ] cgroup v2 memory and CPU limits
-- [ ] High-level `sandbox run <binary>` CLI
+- [ ] High-level `capsule run <binary>` CLI
 
 ## Requirements
 
