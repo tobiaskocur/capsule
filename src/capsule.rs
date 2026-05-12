@@ -1,11 +1,15 @@
-use crate::errors::Result;
+use nix::unistd::{fork, ForkResult, getpid, getppid};
+use nix::sys::wait::{waitpid, };
+use crate::errors::{CapsuleError, Result};
 use crate::namespaces::{
     current_user_namespace,
     enter_user_namespace,
     setup_user_mapping,
     read_uid_map,
     read_gid_map,
-    become_root_in_namespace
+    become_root_in_namespace,
+    current_pid_namespace,
+    enter_pid_namespace
 };
 
 pub fn run() -> Result<()> {
@@ -19,17 +23,16 @@ pub fn run() -> Result<()> {
     println!("PID: {}", std::process::id());
 
 
-    // now we go through the logic from namespace so
     // get current namespace
-    let current_ns = current_user_namespace()?;
-    println!("current_user_namespace: {}", current_ns);
+    let current_namespace = current_user_namespace()?;
+    println!("current_user_namespace: {}", current_namespace);
 
     // try to create a new namespace for the process
     enter_user_namespace()?;
 
     // check if we really changed namespaces
-    let new_ns = current_user_namespace()?;
-    println!("after_user_namespace: {}", new_ns);
+    let new_namespace = current_user_namespace()?;
+    println!("after_user_namespace: {}", new_namespace);
 
     // first we write our uid/gid mapping through procfs
     setup_user_mapping(host_uid, host_gid)?;
@@ -53,6 +56,38 @@ pub fn run() -> Result<()> {
     println!("after setuid/gid:");
     println!("uid: {}", nix::unistd::getuid().as_raw());
     println!("gid: {}", nix::unistd::getgid().as_raw());
+
+
+    // retrieve the current pid namespace before changing
+    let current_pid_ns = current_pid_namespace()?;
+    println!("before entering new namespace: {}", current_pid_ns);
+
+    // try to enter a new pid namespace
+    enter_pid_namespace()?;
+
+    // SAFETY: we call fork in a controlled sandbox bootstrap path
+    // the child branch will stay minimal and should eventually exec the target process
+
+    // we create a child process because after entering the new pid namespace only the children are inside it not the current process
+    // check for child result and we debug our new pid and compare the new pid namespace
+    match unsafe { fork() } {
+        Ok(ForkResult::Parent { child }) => {
+            println!("parent pid: {}", child); // for debug purposes only, never use println! in a fork in production
+            waitpid(child, None)
+                .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+        }
+
+        Ok(ForkResult::Child) => {
+            println!("child: inside new pid namespace");
+            println!("child pid: {}", getpid());
+            println!("child parent pid: {}", getppid());
+
+            let pid_ns = current_pid_namespace()?;
+            println!("current pid namespace: {}", pid_ns);
+        }
+
+        Err(e) => return Err(CapsuleError::Namespace(e.to_string())),
+    }
 
     Ok(())
 }

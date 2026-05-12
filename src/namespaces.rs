@@ -59,7 +59,7 @@ pub fn current_pid_namespace() -> Result<String> {
 }
 
 // create a new PID namespace for future child processes
-// the current process stays where it is, only children create after this call are inside the new namespace
+// the current process stays where it is, only children created after this call are inside the new namespace
 pub fn enter_pid_namespace() -> Result<()> {
     unshare(CloneFlags::CLONE_NEWPID)
         .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
