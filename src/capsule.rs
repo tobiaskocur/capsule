@@ -1,5 +1,5 @@
 use nix::unistd::{fork, ForkResult, getpid, getppid};
-use nix::sys::wait::{waitpid, };
+use nix::sys::wait::{waitpid, WaitStatus};
 use crate::errors::{CapsuleError, Result};
 use crate::namespaces::{
     current_user_namespace,
@@ -73,8 +73,20 @@ pub fn run() -> Result<()> {
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child }) => {
             println!("parent pid: {}", child); // for debug purposes only, never use println! in a fork in production
-            waitpid(child, None)
+            let status = waitpid(child, None)
                 .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+
+            match status {
+                WaitStatus::Exited(pid, exit_code) => {
+                    println!("child {} exited with status {}", pid, exit_code);
+                }
+                WaitStatus::Signaled(pid, signal, _) => {
+                    println!("child {} was killed by signal {:?}", pid, signal);
+                }
+                other => {
+                    println!("child changed state: {:?}", other);
+                }
+            }
         }
 
         Ok(ForkResult::Child) => {
