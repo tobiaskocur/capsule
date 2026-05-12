@@ -7,9 +7,10 @@ mod utils;
 
 fn main() {
     match run() {
-        Ok(_) => {}
+        Ok(()) => {}
         Err(e) => {
             eprintln!("Failed to run capsule: {}", e);
+            std::process::exit(1);
         }
     }
 }

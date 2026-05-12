@@ -2,11 +2,11 @@ use std::fs;
 use nix::sched::{unshare, CloneFlags};
 
 use crate::errors::{CapsuleError, Result};
+use crate::utils;
 
 // we retrieve the namespace id of the current user namespace through symlink to check if we are actually changing after entering a new one
 pub fn current_user_namespace() -> Result<String> {
-    let path = fs::read_link("/proc/self/ns/user")?;
-    Ok(path.display().to_string())
+    utils::read_namespace_link("/proc/self/ns/user")
 }
 
 // create a new user namespace for the current process, CLONE_NEWUSER allows us to later have
@@ -52,3 +52,18 @@ pub fn become_root_in_namespace() -> Result<()> {
 
     Ok(())
 }
+
+// retrieve the current PID namespace id from procfs symlink
+pub fn current_pid_namespace() -> Result<String> {
+    utils::read_namespace_link("/proc/self/ns/pid")
+}
+
+// create a new PID namespace for future child processes
+// the current process stays where it is, only children create after this call are inside the new namespace
+pub fn enter_pid_namespace() -> Result<()> {
+    unshare(CloneFlags::CLONE_NEWPID)
+        .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+
+    Ok(())
+}
+
