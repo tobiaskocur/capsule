@@ -1,5 +1,5 @@
+use nix::sched::{CloneFlags, unshare};
 use std::fs;
-use nix::sched::{unshare, CloneFlags};
 
 use crate::errors::{CapsuleError, Result};
 use crate::utils;
@@ -12,8 +12,7 @@ pub fn current_user_namespace() -> Result<String> {
 // create a new user namespace for the current process, CLONE_NEWUSER allows us to later have
 // root in our namespace, without launching the app with root privileges
 pub fn enter_user_namespace() -> Result<()> {
-    unshare(CloneFlags::CLONE_NEWUSER)
-        .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+    unshare(CloneFlags::CLONE_NEWUSER).map_err(|e| CapsuleError::Namespace(e.to_string()))?;
 
     Ok(())
 }
@@ -61,9 +60,7 @@ pub fn current_pid_namespace() -> Result<String> {
 // create a new PID namespace for future child processes
 // the current process stays where it is, only children created after this call are inside the new namespace
 pub fn enter_pid_namespace() -> Result<()> {
-    unshare(CloneFlags::CLONE_NEWPID)
-        .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+    unshare(CloneFlags::CLONE_NEWPID).map_err(|e| CapsuleError::Namespace(e.to_string()))?;
 
     Ok(())
 }
-

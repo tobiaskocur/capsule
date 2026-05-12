@@ -1,8 +1,8 @@
 use crate::capsule::run;
 
 mod capsule;
-mod namespaces;
 mod errors;
+mod namespaces;
 mod utils;
 
 fn main() {
@@ -14,4 +14,3 @@ fn main() {
         }
     }
 }
-

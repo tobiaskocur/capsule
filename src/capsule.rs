@@ -1,16 +1,10 @@
-use nix::unistd::{fork, ForkResult, getpid, getppid};
-use nix::sys::wait::{waitpid, WaitStatus};
 use crate::errors::{CapsuleError, Result};
 use crate::namespaces::{
-    current_user_namespace,
-    enter_user_namespace,
-    setup_user_mapping,
-    read_uid_map,
-    read_gid_map,
-    become_root_in_namespace,
-    current_pid_namespace,
-    enter_pid_namespace
+    become_root_in_namespace, current_pid_namespace, current_user_namespace, enter_pid_namespace,
+    enter_user_namespace, read_gid_map, read_uid_map, setup_user_mapping,
 };
+use nix::sys::wait::{WaitStatus, waitpid};
+use nix::unistd::{ForkResult, fork, getpid, getppid};
 
 pub fn run() -> Result<()> {
     // retrieve current uid/gid for future use
@@ -21,7 +15,6 @@ pub fn run() -> Result<()> {
     println!("host_gid: {}", host_gid);
 
     println!("PID: {}", std::process::id());
-
 
     // get current namespace
     let current_namespace = current_user_namespace()?;
@@ -57,7 +50,6 @@ pub fn run() -> Result<()> {
     println!("uid: {}", nix::unistd::getuid().as_raw());
     println!("gid: {}", nix::unistd::getgid().as_raw());
 
-
     // retrieve the current pid namespace before changing
     let current_pid_ns = current_pid_namespace()?;
     println!("before entering new namespace: {}", current_pid_ns);
@@ -73,8 +65,8 @@ pub fn run() -> Result<()> {
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child }) => {
             println!("parent pid: {}", child);
-            let status = waitpid(child, None)
-                .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
+            let status =
+                waitpid(child, None).map_err(|e| CapsuleError::Namespace(e.to_string()))?;
 
             match status {
                 WaitStatus::Exited(pid, exit_code) => {
