@@ -72,7 +72,7 @@ pub fn run() -> Result<()> {
     // check for child result and we debug our new pid and compare the new pid namespace
     match unsafe { fork() } {
         Ok(ForkResult::Parent { child }) => {
-            println!("parent pid: {}", child); // for debug purposes only, never use println! in a fork in production
+            println!("parent pid: {}", child);
             let status = waitpid(child, None)
                 .map_err(|e| CapsuleError::Namespace(e.to_string()))?;
 
@@ -90,7 +90,7 @@ pub fn run() -> Result<()> {
         }
 
         Ok(ForkResult::Child) => {
-            println!("child: inside new pid namespace");
+            println!("child: inside new pid namespace"); // for debug purposes only, never use println! in a fork in production
             println!("child pid: {}", getpid());
             println!("child parent pid: {}", getppid());
 
